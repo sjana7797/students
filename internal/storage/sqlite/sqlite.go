@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"log/slog"
+	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/sjana7797/students/internal/config"
@@ -115,5 +116,45 @@ func (s *Sqlite) GetStudentById(id int64) (types.Student, error) {
 	}
 
 	return student, nil
+
+}
+
+func (s *Sqlite) UpdateStudentById(id int64, student types.UpdateStudent) (int64, error) {
+
+	var fields []string
+	var args []interface{}
+
+	if student.Name != nil {
+		fields = append(fields, "name = ?")
+		args = append(args, *student.Name)
+	}
+
+	if student.Email != nil {
+		fields = append(fields, "email = ?")
+		args = append(args, *student.Email)
+	}
+
+	if student.Age != nil {
+		fields = append(fields, "age = ?")
+		args = append(args, *student.Age)
+	}
+
+	if len(fields) == 0 {
+		slog.Info("No field to update")
+		return id, nil
+	}
+
+	args = append(args, id)
+
+	query := fmt.Sprintf("UPDATE student SET %s WHERE id = ?", strings.Join(fields, ", "))
+
+	_, err := s.Db.Exec(query, args...)
+
+	if err != nil {
+		slog.Error(err.Error())
+		return 0, err
+	}
+
+	return id, nil
 
 }

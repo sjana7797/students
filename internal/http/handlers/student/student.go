@@ -107,3 +107,46 @@ func GetStudent(storage storage.Storage) http.HandlerFunc {
 
 	}
 }
+
+func UpdateStudent(storage storage.Storage) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+
+		slog.Info("Updating student with id", slog.String("id", id))
+
+		intId, err := strconv.ParseInt(id, 10, 64)
+
+		if err != nil {
+			slog.Error(err.Error())
+			response.WriteJSON(w, http.StatusBadRequest, response.GeneralError(err))
+			return
+		}
+
+		studentBody := types.UpdateStudent{}
+
+		// Read JSON body
+		err = json.NewDecoder(r.Body).Decode(&studentBody)
+		if err != nil {
+			http.Error(w, "Unable to read request body", http.StatusBadRequest)
+			return
+		}
+
+		updateStudentId, err := storage.UpdateStudentById(intId, studentBody)
+
+		if err != nil {
+			slog.Error(err.Error())
+			response.WriteJSON(w, http.StatusInternalServerError, response.GeneralError(err))
+			return
+		}
+
+		student, err := storage.GetStudentById(updateStudentId)
+
+		if err != nil {
+			slog.Error(err.Error())
+			response.WriteJSON(w, http.StatusInternalServerError, response.GeneralError(err))
+			return
+		}
+
+		response.WriteJSON(w, http.StatusAccepted, student)
+	}
+}
