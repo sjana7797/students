@@ -50,7 +50,7 @@ func New(storage storage.Storage) http.HandlerFunc {
 			return
 		}
 
-		slog.Info(fmt.Sprintf("student create successfully with id : %s", id))
+		slog.Info("student create successfully with id", slog.String("id", string(id)))
 
 		response.WriteJSON(w, http.StatusCreated, map[string]int64{"id": id})
 	}
